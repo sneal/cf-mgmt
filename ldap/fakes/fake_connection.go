@@ -3,6 +3,7 @@ package fakes
 
 import (
 	"sync"
+	"time"
 
 	ldapa "github.com/go-ldap/ldap"
 	"github.com/vmwarepivotallabs/cf-mgmt/ldap"
@@ -35,6 +36,11 @@ type FakeConnection struct {
 	searchReturnsOnCall map[int]struct {
 		result1 *ldapa.SearchResult
 		result2 error
+	}
+	SetTimeoutStub        func(time.Duration)
+	setTimeoutMutex       sync.RWMutex
+	setTimeoutArgsForCall []struct {
+		arg1 time.Duration
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
@@ -178,6 +184,37 @@ func (fake *FakeConnection) SearchReturnsOnCall(i int, result1 *ldapa.SearchResu
 	}{result1, result2}
 }
 
+func (fake *FakeConnection) SetTimeout(arg1 time.Duration) {
+	fake.setTimeoutMutex.Lock()
+	fake.setTimeoutArgsForCall = append(fake.setTimeoutArgsForCall, struct {
+		arg1 time.Duration
+	}{arg1})
+	fake.recordInvocation("SetTimeout", []interface{}{arg1})
+	fake.setTimeoutMutex.Unlock()
+	if fake.SetTimeoutStub != nil {
+		fake.SetTimeoutStub(arg1)
+	}
+}
+
+func (fake *FakeConnection) SetTimeoutCallCount() int {
+	fake.setTimeoutMutex.RLock()
+	defer fake.setTimeoutMutex.RUnlock()
+	return len(fake.setTimeoutArgsForCall)
+}
+
+func (fake *FakeConnection) SetTimeoutCalls(stub func(time.Duration)) {
+	fake.setTimeoutMutex.Lock()
+	defer fake.setTimeoutMutex.Unlock()
+	fake.SetTimeoutStub = stub
+}
+
+func (fake *FakeConnection) SetTimeoutArgsForCall(i int) time.Duration {
+	fake.setTimeoutMutex.RLock()
+	defer fake.setTimeoutMutex.RUnlock()
+	argsForCall := fake.setTimeoutArgsForCall[i]
+	return argsForCall.arg1
+}
+
 func (fake *FakeConnection) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -187,6 +224,8 @@ func (fake *FakeConnection) Invocations() map[string][][]interface{} {
 	defer fake.isClosingMutex.RUnlock()
 	fake.searchMutex.RLock()
 	defer fake.searchMutex.RUnlock()
+	fake.setTimeoutMutex.RLock()
+	defer fake.setTimeoutMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

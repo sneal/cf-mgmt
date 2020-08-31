@@ -19,6 +19,38 @@ type Connection interface {
 	IsClosing() bool
 }
 
+type ConnectionAdapter struct {
+	Connection Connection
+}
+
+func (c ConnectionAdapter) Close() {
+	c.Connection.Close()
+}
+
+func (c ConnectionAdapter) Search(searchRequest *l.SearchRequest) (*l.SearchResult, error) {
+	return c.Connection.Search(searchRequest)
+}
+
+func (c ConnectionAdapter) IsClosing() bool {
+	return c.Connection.IsClosing()
+}
+
+func NewConnectionAdapter(config *config.LdapConfig) (Connection, error) {
+	connection, err := CreateConnection(config)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ConnectionAdapter{
+		Connection: connection,
+	}, nil
+}
+
+func (c ConnectionAdapter) CreateConnection(config *config.LdapConfig) (Connection, error) {
+	return CreateConnection(config)
+}
+
 func CreateConnection(config *config.LdapConfig) (Connection, error) {
 	ldapURL := fmt.Sprintf("%s:%d", config.LdapHost, config.LdapPort)
 	lo.G.Debug("Connecting to", ldapURL)

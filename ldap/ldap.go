@@ -23,7 +23,7 @@ const (
 )
 
 func NewManager(ldapConfig *config.LdapConfig) (*Manager, error) {
-	conn, err := CreateConnection(ldapConfig)
+	conn, err := NewConnectionAdapter(ldapConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -137,13 +137,14 @@ func (m *Manager) GetUserDNs(groupName string) ([]string, error) {
 }
 
 func (m *Manager) doSearch(search *l.SearchRequest) (*l.SearchResult, error) {
-	if m.Connection.IsClosing() {
-		conn, err := CreateConnection(m.Config)
-		if err != nil {
-			return nil, err
-		}
-		m.Connection = conn
-	}
+	// if m.Connection.IsClosing() {
+	//   conn, err := CreateConnection(m.Config)
+	//   if err != nil {
+	//     return nil, err
+	//   }
+	//   m.Connection = conn
+	// }
+	lo.G.Error("doSearch: about to m.Connection.Search")
 	sr, err := m.Connection.Search(search)
 	if err != nil {
 		return nil, err
@@ -194,6 +195,7 @@ func (m *Manager) IsGroup(DN string) (bool, string, error) {
 }
 
 func (m *Manager) GetUserByDN(userDN string) (*User, error) {
+	lo.G.Error("GetUserByDN")
 	cn, searchBase, err := ParseUserCN(userDN)
 	if err != nil {
 		return nil, err
@@ -209,17 +211,19 @@ func (m *Manager) GetUserByDN(userDN string) (*User, error) {
 }
 
 func (m *Manager) GetUserByID(userID string) (*User, error) {
+	lo.G.Error("GetUserByID")
 	filter := m.getUserFilter(userID)
 	return m.searchUser(filter, m.Config.UserSearchBase, userID)
 }
 
 func (m *Manager) searchUser(filter, searchBase, userID string) (*User, error) {
-	if m.userInCache(filter) {
-		lo.G.Debugf("User with filter %s found in cache", filter)
-		return m.userMap[filter], nil
-	}
-	lo.G.Debugf("Searching with filter [%s]", filter)
-	lo.G.Debugf("Using user search base: [%s]", searchBase)
+	lo.G.Error("searchUser")
+	// if m.userInCache(filter) {
+	// lo.G.Error("User with filter %s found in cache", filter)
+	// return m.userMap[filter], nil
+	// }
+	lo.G.Errorf("Searching with filter [%s]", filter)
+	lo.G.Errorf("Using user search base: [%s]", searchBase)
 	search := l.NewSearchRequest(
 		searchBase,
 		l.ScopeWholeSubtree, l.NeverDerefAliases, 0, 0, false,
