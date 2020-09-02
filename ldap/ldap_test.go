@@ -2,6 +2,9 @@ package ldap_test
 
 import (
 	"errors"
+	"fmt"
+	"log"
+	"time"
 
 	l "github.com/go-ldap/ldap"
 	. "github.com/onsi/ginkgo"
@@ -12,41 +15,41 @@ import (
 )
 
 var _ = Describe("Ldap", func() {
-	// FDescribe("Searching an LDAP server with 200k users", func() {
-	//   ldapConfig := &config.LdapConfig{
-	//     Origin:            "ldap",
-	//     GroupAttribute:    "member",
-	//     UserNameAttribute: "uid",
-	//     UserMailAttribute: "mail",
-	//     //GroupSearchBase:   "ou=groups,dc=example,dc=org",
-	//     GroupSearchBase: "dc=example,dc=org",
-	//     UserSearchBase:  "dc=example,dc=org",
-	//     LdapHost:        "localhost",
-	//     LdapPort:        389,
-	//     BindDN:          "cn=admin,dc=example,dc=org",
-	//     BindPassword:    "admin",
-	//   }
-	//   ldapManager, err := ldap.NewManager(ldapConfig)
-	//   if err != nil {
-	//     fmt.Println("Could not create ldap manager")
-	//     log.Fatal(err)
-	//   }
-	//   It("does not error", func() {
-	//     //ldapManager.Connection.SetTimeout(time.Millisecond)
-	//     fmt.Printf("Manager created at %v\n", time.Now())
-	//     for !ldapManager.Connection.IsClosing() {
-	//       _, err = ldapManager.GetUserByDN("cn=user11,dc=example,dc=org")
-	//       if err == nil {
-	//         fmt.Printf("%v Connection alive. Sleeping for 5 seconds\n", time.Now())
-	//       }
-	//       time.Sleep(5 * time.Second)
-	//     }
-	//     fmt.Print("Connection IsClosing() == true")
-	//     time.Sleep(10 * time.Second)
-	//     _, err = ldapManager.GetUserByDN("cn=user11,dc=example,dc=org")
-	//     Expect(err).ShouldNot(HaveOccurred())
-	//   })
-	// })
+	FDescribe("Searching an LDAP server with 200k users", func() {
+		ldapConfig := &config.LdapConfig{
+			Origin:            "ldap",
+			GroupAttribute:    "member",
+			UserNameAttribute: "uid",
+			UserMailAttribute: "mail",
+			//GroupSearchBase:   "ou=groups,dc=example,dc=org",
+			GroupSearchBase: "dc=example,dc=org",
+			UserSearchBase:  "dc=example,dc=org",
+			LdapHost:        "localhost",
+			LdapPort:        389,
+			BindDN:          "cn=admin,dc=example,dc=org",
+			BindPassword:    "admin",
+		}
+		ldapManager, err := ldap.NewManager(ldapConfig)
+		if err != nil {
+			fmt.Println("Could not create ldap manager")
+			log.Fatal(err)
+		}
+		It("does not error", func() {
+			//ldapManager.Connection.SetTimeout(time.Millisecond)
+			fmt.Printf("Manager created at %v\n", time.Now())
+			for !ldapManager.Connection.IsClosing() {
+				_, err = ldapManager.GetUserByDN("cn=user11,dc=example,dc=org")
+				if err == nil {
+					fmt.Printf("%v Connection alive. Sleeping for 5 seconds\n", time.Now())
+				}
+				time.Sleep(5 * time.Second)
+			}
+			fmt.Print("Connection IsClosing() == true. Restart ldap within 20 seconds!")
+			time.Sleep(20 * time.Second)
+			_, err = ldapManager.GetUserByDN("cn=user11,dc=example,dc=org")
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+	})
 	// fake connection + fake manager
 	// connection.IsclosingReturns(true)
 	// asserrt manager.connection .isnotclosing

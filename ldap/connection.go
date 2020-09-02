@@ -21,13 +21,21 @@ type Connection interface {
 
 type ConnectionAdapter struct {
 	Connection Connection
+	Config     *config.LdapConfig
 }
 
 func (c ConnectionAdapter) Close() {
 	c.Connection.Close()
 }
 
-func (c ConnectionAdapter) Search(searchRequest *l.SearchRequest) (*l.SearchResult, error) {
+func (c ConnectionAdapter) Search(searchRequest *l.SearchRequest) (l *l.SearchResult, err error) {
+	if c.Connection.IsClosing() {
+		c.Connection, err = CreateConnection(c.Config)
+		if err != nil {
+			lo.G.Error("Could not re-establish LDAP connection")
+			return nil, err
+		}
+	}
 	return c.Connection.Search(searchRequest)
 }
 
@@ -44,6 +52,7 @@ func NewConnectionAdapter(config *config.LdapConfig) (Connection, error) {
 
 	return ConnectionAdapter{
 		Connection: connection,
+		Config:     config,
 	}, nil
 }
 
