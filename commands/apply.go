@@ -20,6 +20,7 @@ func (c *ApplyCommand) Execute([]string) error {
 	if err = cfMgmt.UserManager.InitializeLdap(c.LdapUser, c.LdapPassword, c.LdapServer); err != nil {
 		return err
 	}
+
 	defer cfMgmt.UserManager.DeinitializeLdap()
 	fmt.Println("*********  Creating Orgs")
 	if err = cfMgmt.OrgManager.CreateOrgs(); err != nil {
@@ -48,6 +49,16 @@ func (c *ApplyCommand) Execute([]string) error {
 
 	fmt.Println("*********  Assign Default Security Groups")
 	if err = cfMgmt.SecurityGroupManager.AssignDefaultSecurityGroups(); err != nil {
+		return err
+	}
+
+	fmt.Println("*********  Create Running Environment Variable Groups")
+	if err = cfMgmt.EnvironmentGroupManager.SetEnvironmentVariableGroup(true); err != nil {
+		return err
+	}
+
+	fmt.Println("*********  Create Staging Environment Variable Groups")
+	if err = cfMgmt.EnvironmentGroupManager.SetEnvironmentVariableGroup(false); err != nil {
 		return err
 	}
 

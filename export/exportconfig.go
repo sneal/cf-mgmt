@@ -7,6 +7,7 @@ import (
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
 	"github.com/pkg/errors"
 	"github.com/vmwarepivotallabs/cf-mgmt/config"
+	"github.com/vmwarepivotallabs/cf-mgmt/envgroup"
 	"github.com/vmwarepivotallabs/cf-mgmt/isosegment"
 	"github.com/vmwarepivotallabs/cf-mgmt/organizationreader"
 	"github.com/vmwarepivotallabs/cf-mgmt/privatedomain"
@@ -29,40 +30,43 @@ func NewExportManager(
 	userManager user.Manager,
 	orgReader organizationreader.Reader,
 	securityGroupManager securitygroup.Manager,
+	envVarGroupManager envgroup.Manager,
 	isoSegmentMgr isosegment.Manager,
 	privateDomainMgr privatedomain.Manager,
 	sharedDomainMgr *shareddomain.Manager,
 	serviceAccessMgr *serviceaccess.Manager,
 	quotaMgr *quota.Manager) *Manager {
 	return &Manager{
-		ConfigMgr:            config.NewManager(configDir),
-		UAAMgr:               uaaMgr,
-		SpaceManager:         spaceManager,
-		UserManager:          userManager,
-		OrgReader:            orgReader,
-		SecurityGroupManager: securityGroupManager,
-		IsoSegmentManager:    isoSegmentMgr,
-		PrivateDomainManager: privateDomainMgr,
-		SharedDomainManager:  sharedDomainMgr,
-		ServiceAccessManager: serviceAccessMgr,
-		QuotaManager:         quotaMgr,
+		ConfigMgr:               config.NewManager(configDir),
+		UAAMgr:                  uaaMgr,
+		SpaceManager:            spaceManager,
+		UserManager:             userManager,
+		OrgReader:               orgReader,
+		SecurityGroupManager:    securityGroupManager,
+		EnvironmentGroupManager: envVarGroupManager,
+		IsoSegmentManager:       isoSegmentMgr,
+		PrivateDomainManager:    privateDomainMgr,
+		SharedDomainManager:     sharedDomainMgr,
+		ServiceAccessManager:    serviceAccessMgr,
+		QuotaManager:            quotaMgr,
 	}
 }
 
 type Manager struct {
-	ConfigMgr            config.Manager
-	UAAMgr               uaa.Manager
-	SpaceManager         space.Manager
-	UserManager          user.Manager
-	OrgReader            organizationreader.Reader
-	SecurityGroupManager securitygroup.Manager
-	IsoSegmentManager    isosegment.Manager
-	PrivateDomainManager privatedomain.Manager
-	SharedDomainManager  *shareddomain.Manager
-	ServiceAccessManager *serviceaccess.Manager
-	QuotaManager         *quota.Manager
-	SkipSpaces           bool
-	SkipRoutingGroups    bool
+	ConfigMgr               config.Manager
+	UAAMgr                  uaa.Manager
+	SpaceManager            space.Manager
+	UserManager             user.Manager
+	OrgReader               organizationreader.Reader
+	SecurityGroupManager    securitygroup.Manager
+	EnvironmentGroupManager envgroup.Manager
+	IsoSegmentManager       isosegment.Manager
+	PrivateDomainManager    privatedomain.Manager
+	SharedDomainManager     *shareddomain.Manager
+	ServiceAccessManager    *serviceaccess.Manager
+	QuotaManager            *quota.Manager
+	SkipSpaces              bool
+	SkipRoutingGroups       bool
 }
 
 func (im *Manager) ExportServiceAccess() error {
@@ -131,6 +135,16 @@ func (im *Manager) ExportConfig(excludedOrgs, excludedSpaces map[string]string, 
 	if err != nil {
 		lo.G.Errorf("Unable to retrieve security groups. Error : %s", err)
 		return err
+	}
+
+	runningEnvironmentVariableGroup, err := im.EnvironmentGroupManager.GetEnvironmentVariableGroup(true)
+	if err != nil {
+		lo.G.Errorf("Unable to retrieve running environment variable groups. Error: %s", err)
+	}
+
+	stagingEnvironmentVariableGroup, err := im.EnvironmentGroupManager.GetEnvironmentVariableGroup(false)
+	if err != nil {
+		lo.G.Errorf("Unable to retrieve staging environment variable groups. Error: %s", err)
 	}
 
 	isolationSegments, err := im.IsoSegmentManager.ListIsolationSegments()
@@ -262,6 +276,9 @@ func (im *Manager) ExportConfig(excludedOrgs, excludedSpaces map[string]string, 
 			lo.G.Error(err)
 		}
 	}
+
+	globalConfig.RunningEnvironmentVariableGroup = runningEnvironmentVariableGroup
+	globalConfig.StagingEnvironmentVariableGroup = stagingEnvironmentVariableGroup
 
 	orgQuotas, err := im.QuotaManager.Client.ListOrgQuotas()
 	if err != nil {

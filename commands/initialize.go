@@ -8,6 +8,7 @@ import (
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
 	"github.com/vmwarepivotallabs/cf-mgmt/config"
 	"github.com/vmwarepivotallabs/cf-mgmt/configcommands"
+	"github.com/vmwarepivotallabs/cf-mgmt/envgroup"
 	"github.com/vmwarepivotallabs/cf-mgmt/isosegment"
 	"github.com/vmwarepivotallabs/cf-mgmt/organization"
 	"github.com/vmwarepivotallabs/cf-mgmt/organizationreader"
@@ -34,6 +35,7 @@ type CFMgmt struct {
 	ConfigDirectory         string
 	SystemDomain            string
 	SecurityGroupManager    securitygroup.Manager
+	EnvironmentGroupManager envgroup.Manager
 	IsolationSegmentManager isosegment.Manager
 	ServiceAccessManager    *serviceaccess.Manager
 	SharedDomainManager     *shareddomain.Manager
@@ -102,6 +104,7 @@ func InitializePeekManagers(baseCommand BaseCFConfigCommand, peek bool) (*CFMgmt
 
 	cfMgmt.UserManager = user.NewManager(client, cfg, cfMgmt.SpaceManager, cfMgmt.OrgReader, cfMgmt.UAAManager, peek)
 	cfMgmt.SecurityGroupManager = securitygroup.NewManager(client, cfMgmt.SpaceManager, cfg, peek)
+	cfMgmt.EnvironmentGroupManager = envgroup.NewManager(client, cfg)
 	cfMgmt.QuotaManager = quota.NewManager(client, cfMgmt.SpaceManager, cfMgmt.OrgReader, cfMgmt.OrgManager, cfg, peek)
 	cfMgmt.PrivateDomainManager = privatedomain.NewManager(client, cfMgmt.OrgReader, cfg, peek)
 	if isoSegmentManager, err := isosegment.NewManager(client, cfg, cfMgmt.OrgReader, cfMgmt.SpaceManager, peek); err == nil {

@@ -26,6 +26,7 @@ func (c *ExportConfigurationCommand) Execute([]string) error {
 			cfMgmt.UserManager,
 			cfMgmt.OrgReader,
 			cfMgmt.SecurityGroupManager,
+			cfMgmt.EnvironmentGroupManager,
 			cfMgmt.IsolationSegmentManager,
 			cfMgmt.PrivateDomainManager,
 			cfMgmt.SharedDomainManager,
